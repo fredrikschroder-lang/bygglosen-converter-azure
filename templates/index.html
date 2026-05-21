@@ -5,33 +5,50 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Bygglösen Konverterare</title>
+    <!-- Google Font: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- jsPDF and AutoTable CDNs for client-side PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 1rem;
+            padding: 2rem 1rem;
             box-sizing: border-box;
         }
 
         .container {
             background-color: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(30, 41, 59, 0.05);
             width: 100%;
-            max-width: 500px;
+            max-width: 750px;
+            transition: all 0.3s ease;
         }
 
         h1 {
             text-align: center;
             margin-bottom: 2rem;
-            color: #2c3e50;
+            color: #1e3a8a;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            color: #334155;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
         }
 
         .form-group {
@@ -42,53 +59,109 @@
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
         }
 
         input[type="file"] {
             display: block;
             width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.75rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
             box-sizing: border-box;
+            background-color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
+        input[type="file"]:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s ease;
+            border: none;
+            font-size: 0.95rem;
+            text-decoration: none;
         }
 
-        button:hover {
-            background-color: #0056b3;
+        .btn-block {
+            display: flex;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        .btn-primary:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
         }
 
         .flash-messages {
-            margin-bottom: 1rem;
-            padding: 0.75rem;
-            background-color: #fee;
-            border: 1px solid #fcc;
-            border-radius: 4px;
-            color: #c00;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1rem;
+            background-color: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            color: #b91c1c;
+            font-size: 0.9rem;
         }
 
         .hint {
-            font-size: 0.85rem;
-            color: #666;
-            margin-top: 0.25rem;
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.35rem;
         }
 
         .user-bar {
-            background: #e8f0fe;
-            padding: 1rem;
-            border-radius: 4px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
             margin-bottom: 2rem;
             display: flex;
             justify-content: space-between;
@@ -99,6 +172,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            font-size: 0.9rem;
         }
 
         .user-avatar {
@@ -110,27 +184,28 @@
         .admin-link {
             color: #2563eb;
             text-decoration: none;
-            font-weight: bold;
+            font-weight: 600;
             background: white;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.8rem;
         }
 
         .logout-btn {
             background: none;
             border: none;
-            color: #c00;
-            font-weight: bold;
+            color: #ef4444;
+            font-weight: 600;
             cursor: pointer;
             width: auto;
             padding: 0;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            transition: color 0.2s;
         }
 
         .logout-btn:hover {
-            background: none;
-            color: #900;
+            color: #b91c1c;
         }
 
         .login-area {
@@ -141,58 +216,192 @@
         .sign-in-btn {
             display: inline-block;
             padding: 0.75rem 2rem;
-            background-color: #007bff;
+            background-color: #2563eb;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
-            width: auto;
+            transition: all 0.2s;
         }
 
         .sign-in-btn:hover {
-            background-color: #0056b3;
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
         }
 
         .security-notice {
-            background: #eff6ff;
-            border: 1px solid #93c5fd;
-            border-radius: 6px;
-            padding: 12px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 14px;
             margin-bottom: 1.5rem;
             text-align: left;
         }
 
         .security-notice p {
             margin: 0;
-            font-size: 0.85rem;
-            color: #1e40af;
+            font-size: 0.8rem;
+            color: #0369a1;
+            line-height: 1.4;
         }
 
         .privacy-notice {
             background: #f0fdf4;
-            border: 1px solid #86efac;
-            border-radius: 6px;
-            padding: 12px;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 14px;
             margin-bottom: 1.5rem;
         }
 
         .privacy-notice p {
             margin: 0;
+            font-size: 0.85rem;
+            color: #15803d;
+            line-height: 1.4;
+        }
+
+        /* Segmented Mode Selector */
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-option {
+            flex: 1;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: #fff;
+        }
+
+        .mode-option.active {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.05);
+        }
+
+        .mode-icon {
+            font-size: 1.4rem;
+        }
+
+        .mode-text strong {
+            display: block;
             font-size: 0.9rem;
-            color: #166534;
+            color: #1e293b;
+        }
+
+        .mode-text span {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 3px;
+            line-height: 1.3;
+        }
+
+        /* Date check section styles */
+        #date-check-section {
+            background: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Granskningsläge / Step 2 Table and View */
+        .warnings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        .warnings-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .warnings-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: middle;
+        }
+
+        .warnings-table tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge-warning {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 2px;
+        }
+
+        .review-banner {
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .review-banner-warning {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            color: #c53030;
+        }
+
+        .review-banner-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #15803d;
+        }
+
+        .download-actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            .mode-selector {
+                flex-direction: column;
+            }
+            .download-actions-grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 1.5rem;
+            }
         }
     </style>
-    <!-- Clerk JS: dynamically load from the correct Frontend API URL -->
+    <!-- Clerk JS Loader -->
     <script>
         (function () {
             var pk = "{{ publishable_key }}";
             if (!pk) return;
-            // The publishable key encodes the Frontend API as base64 in the third segment
             var encoded = pk.split('_')[2];
-            // Pad the base64 string and decode to get the Frontend API URL
             var padded = encoded + '==='.slice((encoded.length + 3) % 4 || 4);
             var frontendApi = atob(padded).replace(/\$$/, '');
             var script = document.createElement('script');
@@ -208,7 +417,7 @@
 
 <body>
     <div class="container">
-        <h1>Konvertera Bygglösen</h1>
+        <h1>Bygglösen Konverterare</h1>
 
         {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -220,106 +429,209 @@
         {% endif %}
         {% endwith %}
 
-        <!-- Logged-in view (populated by Clerk JS) -->
+        <!-- Logged-in view -->
         <div id="signed-in-view" style="display:none;">
             <div class="user-bar">
                 <div class="user-bar-left">
                     <img id="user-avatar" class="user-avatar" src="" alt="Avatar" style="display:none;">
-                    <span>Inloggad som: <strong id="user-name"></strong></span>
+                    <span>Inloggad: <strong id="user-name"></strong></span>
                     <a id="admin-link" href="/admin" class="admin-link" style="display:none;">Admin</a>
                 </div>
                 <button class="logout-btn" id="sign-out-btn">Logga ut</button>
             </div>
 
+            <!-- Form: containing all elements so they are submitted to /convert together -->
             <form action="/convert" method="post" enctype="multipart/form-data" id="convert-form">
                 <input type="hidden" name="clerk_token" id="clerk_token">
-                <div class="privacy-notice">
-                    <p>
-                        <strong>Din data är din</strong><br>
-                        Filerna du laddar upp bearbetas direkt och raderas omedelbart efteråt. Ingen information sparas
-                        på servern.
-                    </p>
-                </div>
+                <input type="hidden" name="mode" id="mode-input" value="projekt">
+                <input type="hidden" name="format" id="download-format-input" value="xml">
 
-                <div class="form-group">
-                    <label for="xml_files">Bygglösenfiler från Kontek</label>
-                    <input type="file" name="xml_files" id="xml_files" accept=".xml" multiple required
-                        onchange="checkXMLDates(this)">
-                    <div class="hint">Ladda upp en eller flera Bygglösenfiler (XML).</div>
-                </div>
+                <!-- STEP 1: UPLOAD & SETTINGS -->
+                <div id="step-upload">
+                    <div class="privacy-notice">
+                        <p>
+                            <strong>Din data är säker</strong><br>
+                            Filer bearbetas direkt i minnet och sparas inte på servern.
+                        </p>
+                    </div>
 
-                <!-- Datumkontroll -->
-                <div id="date-check-section"
-                    style="display: none; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 16px; margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 0.95rem; color: #92400e; margin-bottom: 8px;">Datumkontroll</h3>
-                    <div id="date-info-msg" style="font-size: 0.85rem; color: #92400e; margin-bottom: 12px;">Läser
-                        filer...</div>
-                    <div style="display: flex; gap: 12px; align-items: flex-end;">
-                        <div style="flex: 1;">
-                            <label style="font-size: 0.75rem; margin-bottom: 4px;">Startdatum</label>
-                            <input type="date" name="override_start" id="override_start"
-                                style="padding: 6px; font-size: 0.85rem;">
+                    <!-- Mode selector -->
+                    <label>Rapporteringsmetod</label>
+                    <div class="mode-selector">
+                        <div class="mode-option active" id="mode-project-btn" onclick="setMode('projekt')">
+                            <div class="mode-icon">🏗️</div>
+                            <div class="mode-text">
+                                <strong>Projekt-läge (GRK)</strong>
+                                <span>Län & kommun hämtas från projekt i XML. Ingen CSV krävs.</span>
+                            </div>
                         </div>
-                        <div style="flex: 1;">
-                            <label style="font-size: 0.75rem; margin-bottom: 4px;">Slutdatum</label>
-                            <input type="date" name="override_end" id="override_end"
-                                style="padding: 6px; font-size: 0.85rem;">
+                        <div class="mode-option" id="mode-employee-btn" onclick="setMode('anstalld')">
+                            <div class="mode-icon">👤</div>
+                            <div class="mode-text">
+                                <strong>Anställd-läge</strong>
+                                <span>Län & kommun styrs av personkort via CSV-fil.</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="hint" style="margin-top: 8px; color: #b45309;">Datumen ovan kommer att användas i den
-                        färdiga filen.</div>
+
+                    <!-- XML Upload -->
+                    <div class="form-group">
+                        <label for="xml_files">Bygglösenfiler från Kontek (XML)</label>
+                        <input type="file" name="xml_files" id="xml_files" accept=".xml" multiple required
+                            onchange="checkXMLDates(this)">
+                        <div class="hint">Välj en eller flera lönefiler.</div>
+                    </div>
+
+                    <!-- Date Controls (shown if files uploaded) -->
+                    <div id="date-check-section" style="display: none;">
+                        <h3 style="font-size: 0.9rem; color: #92400e; margin: 0 0 10px 0; font-weight: 600;">Löneperiod</h3>
+                        <div id="date-info-msg" style="font-size: 0.8rem; color: #92400e; margin-bottom: 12px;">Läser filer...</div>
+                        <div style="display: flex; gap: 12px;">
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.75rem; margin-bottom: 4px;">Startdatum</label>
+                                <input type="date" name="override_start" id="override_start"
+                                    style="padding: 8px; font-size: 0.85rem; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 0.75rem; margin-bottom: 4px;">Slutdatum</label>
+                                <input type="date" name="override_end" id="override_end"
+                                    style="padding: 8px; font-size: 0.85rem; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CSV Upload (Conditional) -->
+                    <div class="form-group" id="csv-section" style="display: none;">
+                        <label for="csv_file">Person/Län CSV-fil</label>
+                        <input type="file" name="csv_file" id="csv_file" accept=".csv">
+                        <div class="hint">Ladda upp CSV-exporten med Län och kommun för anställda.</div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary btn-block" id="btn-to-review" style="margin-top: 2rem;">
+                        Analysera och granska
+                    </button>
                 </div>
 
-                <div class="form-group">
-                    <label for="csv_file">Person/Län CSV-fil <span
-                            style="color: #999; font-weight: normal;">(valfritt)</span></label>
-                    <input type="file" name="csv_file" id="csv_file" accept=".csv">
-                    <div class="hint">Ladda upp CSV med 'Län och kommun' från Konteks Rapportgenerator. Om du hoppar
-                        över denna används uppgifterna som redan finns i XML-filerna.</div>
-                </div>
+                <!-- STEP 2: REVIEW MODE -->
+                <div id="step-review" style="display: none;">
+                    <h2>Granskningsläge</h2>
 
-                <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 2rem;">
-                    <input type="checkbox" name="include_csv" id="include_csv"
-                        style="width: 20px; height: 20px; cursor: pointer;">
-                    <label for="include_csv" style="margin-bottom: 0; cursor: pointer;">Ladda även ner som CSV</label>
-                </div>
+                    <div id="review-warning-msg" class="review-banner review-banner-warning" style="display: none;">
+                        <strong>⚠️ Personer med ofullständig data upptäcktes</strong>
+                        <span style="font-size: 0.85rem; line-height: 1.4;">
+                            Nedanstående personer saknar Fördelningstal och/eller Yrkeskod. De kommer <strong>inte</strong> att tas med i den konverterade rapporten. Justera gärna detta i Kontek och kör igen, eller ladda ner rapporten för de övriga.
+                        </span>
+                    </div>
 
-                <div id="warnings-section" style="display: none; background: #fef2f2; border: 1px solid #f87171; border-radius: 6px; padding: 16px; margin-bottom: 1.5rem;">
-                    <h3 style="font-size: 0.95rem; color: #991b1b; margin-bottom: 8px;">Personer med ofullständig data</h3>
-                    <p style="font-size: 0.85rem; color: #b91c1c; margin-bottom: 12px;">Följande personer saknar fördelningstal eller avtalsområde och kommer eventuellt filtreras bort eller sakna viktig information i den konverterade filen.</p>
-                    <ul id="warnings-list" style="font-size: 0.85rem; color: #991b1b; padding-left: 20px; margin-bottom: 0; max-height: 300px; overflow-y: auto;">
-                        <!-- Listfylls av JS -->
-                    </ul>
-                </div>
+                    <div id="review-success-msg" class="review-banner review-banner-success" style="display: none;">
+                        <strong>✅ Allt ser bra ut!</strong>
+                        <span style="font-size: 0.85rem;">Alla personer har giltiga fördelningstal och yrkeskoder.</span>
+                    </div>
 
-                <button type="submit">Konvertera och Ladda Ner</button>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                        <span style="font-weight: 600; font-size: 0.9rem; color: #475569;">Lista över granskade uppgifter</span>
+                        <button type="button" class="btn btn-secondary" id="btn-download-pdf" onclick="downloadPDF()" style="padding: 6px 12px; font-size: 0.8rem;">
+                            📄 Ladda ner granskningsresultat (PDF)
+                        </button>
+                    </div>
+
+                    <!-- Warnings Table -->
+                    <div style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 8px;">
+                        <table class="warnings-table" style="margin: 0;">
+                            <thead>
+                                <tr>
+                                    <th>Namn</th>
+                                    <th>Personnummer</th>
+                                    <th>Län/Kommun</th>
+                                    <th>Saknad information</th>
+                                </tr>
+                            </thead>
+                            <tbody id="warnings-table-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="download-actions-grid">
+                        <button type="button" class="btn btn-success" onclick="triggerDownload('xml')">
+                            📥 Ladda ner XML-rapport
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="triggerDownload('csv')">
+                            📊 Ladda ner CSV-rapport
+                        </button>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary btn-block" onclick="goBack()" style="margin-top: 0.5rem;">
+                        ← Tillbaka till uppladdning
+                    </button>
+                </div>
             </form>
         </div>
 
         <!-- Logged-out view -->
         <div id="signed-out-view" style="display:none;">
             <div class="login-area">
-                <p style="margin-bottom: 1rem; color: #666;">Du måste logga in för att använda verktyget.</p>
-
-                <div class="security-notice" style="max-width: 320px; margin: 0 auto 1.5rem;">
+                <p style="margin-bottom: 1.5rem; color: #475569; font-weight: 500;">Inloggning krävs för att använda verktyget.</p>
+                <div class="security-notice" style="max-width: 350px; margin: 0 auto 2rem;">
                     <p>
-                        <strong>Säker inloggning</strong><br>
-                        Du loggar in säkert via Clerk – vi hanterar aldrig ditt lösenord direkt.
+                        <strong>Säker anslutning</strong><br>
+                        Vi skyddar dina uppgifter genom säker inloggning via Clerk. Lösenord hanteras aldrig direkt av oss.
                     </p>
                 </div>
-
                 <button class="sign-in-btn" id="sign-in-btn">Logga in</button>
             </div>
         </div>
 
-        <!-- Loading state (shown while Clerk initialises) -->
-        <div id="loading-view" style="text-align:center; padding: 2rem; color: #888;">
-            Laddar...
+        <!-- Loading state -->
+        <div id="loading-view" style="text-align:center; padding: 3rem; color: #64748b; font-weight: 500;">
+            Laddar verktyget...
         </div>
     </div>
 
     <script>
         const ADMIN_EMAIL = "{{ admin_email }}";
+
+        // Segmented control setting
+        function setMode(mode) {
+            document.getElementById('mode-input').value = mode;
+            
+            const projectBtn = document.getElementById('mode-project-btn');
+            const employeeBtn = document.getElementById('mode-employee-btn');
+            const csvSection = document.getElementById('csv-section');
+            const csvInput = document.getElementById('csv_file');
+            
+            if (mode === 'projekt') {
+                projectBtn.classList.add('active');
+                employeeBtn.classList.remove('active');
+                csvSection.style.display = 'none';
+                csvInput.value = ''; // Clear value if selected mode changes
+                csvInput.required = false;
+            } else {
+                projectBtn.classList.remove('active');
+                employeeBtn.classList.add('active');
+                csvSection.style.display = 'block';
+                csvInput.required = true;
+            }
+        }
+
+        function goBack() {
+            document.getElementById('step-review').style.display = 'none';
+            document.getElementById('step-upload').style.display = 'block';
+        }
+
+        async function triggerDownload(format) {
+            const form = document.getElementById('convert-form');
+            document.getElementById('download-format-input').value = format;
+            
+            try {
+                const token = await window.Clerk.session.getToken();
+                document.getElementById('clerk_token').value = token || '';
+                form.submit();
+            } catch (err) {
+                console.error("Token fetch error:", err);
+                alert("Sessionen kan ha löpt ut. Vänligen ladda om sidan.");
+            }
+        }
 
         window.addEventListener('load', async function () {
             await window.Clerk.load();
@@ -336,106 +648,118 @@
                 signedOutView.style.display = 'block';
             }
 
-            // Sign-in button
             document.getElementById('sign-in-btn').addEventListener('click', function () {
                 window.Clerk.openSignIn();
             });
 
-            // Sign-out button
             document.getElementById('sign-out-btn').addEventListener('click', async function () {
                 await window.Clerk.signOut();
                 window.location.reload();
             });
 
-            // Form submission: get fresh token
-            const convertForm = document.getElementById('convert-form');
-            if (convertForm) {
-                let hasAnalyzed = false;
+            // Step 1 -> Step 2 analysis fetch
+            document.getElementById('btn-to-review').addEventListener('click', async function () {
+                const xmlInput = document.getElementById('xml_files');
+                if (!xmlInput.files || xmlInput.files.length === 0) {
+                    alert("Du måste välja minst en XML-fil.");
+                    return;
+                }
                 
-                convertForm.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-                    const submitBtn = convertForm.querySelector('button[type="submit"]');
-                    const originalText = submitBtn.textContent;
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Autentiserar...';
+                const mode = document.getElementById('mode-input').value;
+                const csvInput = document.getElementById('csv_file');
+                if (mode === 'anstalld' && (!csvInput.files || csvInput.files.length === 0)) {
+                    alert("Du måste välja en CSV-fil för anställd-läge.");
+                    return;
+                }
 
-                    try {
-                        // Force get a fresh token (JWT)
-                        const token = await window.Clerk.session.getToken();
-                        document.getElementById('clerk_token').value = token || '';
-                        
-                        if (!hasAnalyzed) {
-                            submitBtn.textContent = 'Analyserar...';
-                            const formData = new FormData(convertForm);
-                            
-                            const analyzeRes = await fetch('/analyze', {
-                                method: 'POST',
-                                body: formData
-                            });
-                            
-                            if (analyzeRes.ok) {
-                                const data = await analyzeRes.json();
-                                if (data.warnings && data.warnings.length > 0) {
-                                    // Visa varningar
-                                    const warningsList = document.getElementById('warnings-list');
-                                    warningsList.innerHTML = '';
-                                    data.warnings.forEach(w => {
-                                        const li = document.createElement('li');
-                                        li.textContent = `${w.namn} (${w.pnr}) saknar: ${w.missing.join(', ')}`;
-                                        warningsList.appendChild(li);
-                                    });
-                                    document.getElementById('warnings-section').style.display = 'block';
-                                    
-                                    hasAnalyzed = true;
-                                    submitBtn.textContent = 'Godkänn och ladda ner ändå';
-                                    submitBtn.style.backgroundColor = '#d97706';
-                                    submitBtn.disabled = false;
-                                    return; // Stoppa här så vi inte laddar ner
-                                }
-                            } else {
-                                const errData = await analyzeRes.json().catch(() => ({}));
-                                console.error("Analys fel:", errData);
-                                // Fortsätt med nedladdning om analysen kraschar så vi inte blockerar
-                            }
-                        }
+                const btn = document.getElementById('btn-to-review');
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Analyserar data...';
 
-                        submitBtn.textContent = 'Konverterar...';
-
-                        // Submit the form
-                        convertForm.submit();
-
-                        // Visual feedback after submission
-                        setTimeout(() => {
-                            submitBtn.textContent = 'Klart!';
-                            submitBtn.style.backgroundColor = '#28a745';
-                            // Reset state for next use
-                            hasAnalyzed = false;
-                            document.getElementById('warnings-section').style.display = 'none';
-                        }, 1000);
-                    } catch (err) {
-                        console.error('Submit failed:', err);
-                        alert('Kunde inte genomföra förfrågan. Försök ladda om sidan.');
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = originalText;
-                        hasAnalyzed = false;
+                try {
+                    const form = document.getElementById('convert-form');
+                    const token = await window.Clerk.session.getToken();
+                    document.getElementById('clerk_token').value = token || '';
+                    
+                    const formData = new FormData(form);
+                    const res = await fetch('/analyze', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || 'Ett fel uppstod vid analysen.');
                     }
-                });
+                    
+                    const data = await res.json();
+                    
+                    // Transition to step 2
+                    document.getElementById('step-upload').style.display = 'none';
+                    document.getElementById('step-review').style.display = 'block';
+                    
+                    const tbody = document.getElementById('warnings-table-body');
+                    const warningMsg = document.getElementById('review-warning-msg');
+                    const successMsg = document.getElementById('review-success-msg');
+                    const pdfBtn = document.getElementById('btn-download-pdf');
+                    
+                    tbody.innerHTML = '';
+                    
+                    if (data.warnings && data.warnings.length > 0) {
+                        warningMsg.style.display = 'block';
+                        successMsg.style.display = 'none';
+                        pdfBtn.style.display = 'inline-flex';
+                        
+                        data.warnings.forEach(w => {
+                            const tr = document.createElement('tr');
+                            
+                            const tdNamn = document.createElement('td');
+                            tdNamn.textContent = w.namn;
+                            tr.appendChild(tdNamn);
+                            
+                            const tdPnr = document.createElement('td');
+                            tdPnr.textContent = w.pnr;
+                            tr.appendChild(tdPnr);
+                            
+                            const tdLan = document.createElement('td');
+                            tdLan.textContent = w.lankod || '–';
+                            tr.appendChild(tdLan);
+                            
+                            const tdMissing = document.createElement('td');
+                            w.missing.forEach(m => {
+                                const badge = document.createElement('span');
+                                badge.className = 'badge-warning';
+                                badge.textContent = m;
+                                tdMissing.appendChild(badge);
+                            });
+                            tr.appendChild(tdMissing);
+                            
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        warningMsg.style.display = 'none';
+                        successMsg.style.display = 'block';
+                        pdfBtn.style.display = 'none';
+                        
+                        const tr = document.createElement('tr');
+                        const td = document.createElement('td');
+                        td.colSpan = 4;
+                        td.style.textAlign = 'center';
+                        td.style.color = '#64748b';
+                        td.style.padding = '20px';
+                        td.textContent = 'Inga felaktigheter upptäcktes!';
+                        tr.appendChild(td);
+                        tbody.appendChild(tr);
+                    }
+                } catch (e) {
+                    alert(e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            });
 
-                // Re-enable button when files change
-                const resetBtn = () => {
-                    hasAnalyzed = false;
-                    document.getElementById('warnings-section').style.display = 'none';
-                    const submitBtn = convertForm.querySelector('button[type="submit"]');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Konvertera och Ladda Ner';
-                    submitBtn.style.backgroundColor = '#007bff';
-                };
-
-                document.getElementById('xml_files').addEventListener('change', resetBtn);
-                document.getElementById('csv_file').addEventListener('change', resetBtn);
-            }
-
-            // Listen for session changes
             window.Clerk.addListener(({ user }) => {
                 if (user) {
                     loadingView.style.display = 'none';
@@ -452,27 +776,24 @@
             const signedInView = document.getElementById('signed-in-view');
             signedInView.style.display = 'block';
 
-            // Name
             const name = [user.firstName, user.lastName].filter(Boolean).join(' ')
                 || user.primaryEmailAddress?.emailAddress
                 || 'Användare';
             document.getElementById('user-name').textContent = name;
 
-            // Avatar
             if (user.imageUrl) {
                 const avatar = document.getElementById('user-avatar');
                 avatar.src = user.imageUrl;
                 avatar.style.display = 'inline-block';
             }
 
-            // Admin link
             const email = user.primaryEmailAddress?.emailAddress || '';
             if (email === ADMIN_EMAIL) {
                 document.getElementById('admin-link').style.display = 'inline-block';
             }
         }
 
-        // ---- Date check logic (unchanged from original) ----
+        // Date check logic
         async function checkXMLDates(input) {
             const section = document.getElementById('date-check-section');
             const msg = document.getElementById('date-info-msg');
@@ -522,13 +843,13 @@
             }
 
             if (foundError && allIdentical) {
-                msg.innerHTML = "<strong style='color: #dc2626;'>⚠️ VARNING: Alla filer har samma start- och slutdatum.</strong> Justera gärna datumen nedan.";
+                msg.innerHTML = "<strong style='color: #dc2626;'>⚠️ VARNING: Filer har samma start- och slutdatum.</strong> Justera datumen nedan.";
             } else if (inconsistent) {
-                msg.innerHTML = "<strong style='color: #d97706;'>⚠️ OBS: Filerna har olika datumintervall.</strong> Vi föreslår det första hittade intervallet.";
+                msg.innerHTML = "<strong style='color: #d97706;'>⚠️ OBS: Filerna har olika datumintervall.</strong> Vi föreslår det första hittade.";
             } else if (foundError) {
-                msg.innerHTML = "<strong style='color: #d97706;'>⚠️ OBS: Vissa filer har felaktiga datum.</strong> Vi har valt ett korrekt intervall från en av de andra filerna.";
+                msg.innerHTML = "<strong style='color: #d97706;'>⚠️ OBS: Vissa filer har felaktiga datum.</strong> Ett korrekt intervall har valts från en av filerna.";
             } else {
-                msg.innerHTML = "✅ Datumkontroll klar. Kontrollera att perioden nedan stämmer.";
+                msg.innerHTML = "✅ Löneperiod identifierad. Kontrollera att datumen nedan stämmer.";
             }
 
             function formatDate(raw) {
@@ -546,6 +867,45 @@
                 if (s) startInput.value = formatDate(s[1].trim());
                 if (e) endInput.value = formatDate(e[1].trim());
             }
+        }
+
+        // PDF download function
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.text("Granskningsrapport - Saknade uppgifter", 14, 20);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.text("Följande personer saknar fördelningstal och/eller yrkeskod och har uteslutits från exporten.", 14, 28);
+            
+            const tableData = [];
+            const rows = document.querySelectorAll("#warnings-table-body tr");
+            rows.forEach(row => {
+                const cols = row.querySelectorAll("td");
+                if (cols.length >= 4) {
+                    tableData.push([
+                        cols[0].textContent,
+                        cols[1].textContent,
+                        cols[2].textContent,
+                        cols[3].textContent
+                    ]);
+                }
+            });
+            
+            doc.autoTable({
+                head: [['Namn', 'Personnummer', 'Län/Kommun', 'Saknad information']],
+                body: tableData,
+                startY: 35,
+                theme: 'striped',
+                headStyles: { fillColor: [220, 38, 38] },
+                styles: { fontSize: 9 }
+            });
+            
+            doc.save(`granskningsrapport_${new Date().toISOString().slice(0,10)}.pdf`);
         }
     </script>
 </body>

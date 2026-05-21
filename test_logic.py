@@ -61,7 +61,7 @@ def test_conversion():
     
     print("Testing conversion logic (XML + CSV Fallback)...")
     try:
-        xml_res, csv_res = convert_bygglosen_data(xml_stream, csv_stream, include_csv=True)
+        xml_res, csv_res, _ = convert_bygglosen_data(xml_stream, csv_stream, include_csv=True)
         xml_content = xml_res.getvalue().decode('iso-8859-1')
         csv_content = csv_res.getvalue().decode('utf-8-sig')
         

@@ -153,6 +153,7 @@ def analyze(user):
     from flask import jsonify
     xml_files = request.files.getlist('xml_files')
     csv_file = request.files.get('csv_file')
+    mode = request.form.get('mode', 'anstalld')
     
     if not xml_files or all(f.filename == '' for f in xml_files):
         return jsonify({'error': 'Inga XML-filer uppladdade.'}), 400
@@ -165,7 +166,7 @@ def analyze(user):
     try:
         from converter import analyze_bygglosen_data
         xml_streams = [f.stream for f in xml_files]
-        warnings = analyze_bygglosen_data(xml_streams, csv_stream)
+        warnings = analyze_bygglosen_data(xml_streams, csv_stream, mode=mode)
         return jsonify({'warnings': warnings})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -176,7 +177,8 @@ def analyze(user):
 def convert(user):
     xml_files = request.files.getlist('xml_files')
     csv_file = request.files.get('csv_file')
-    include_csv = 'include_csv' in request.form
+    mode = request.form.get('mode', 'anstalld')
+    download_format = request.form.get('format', 'xml')
     override_start = request.form.get('override_start')
     override_end = request.form.get('override_end')
 
@@ -192,33 +194,33 @@ def convert(user):
 
     try:
         xml_streams = [f.stream for f in xml_files]
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-        if include_csv:
-            xml_result, csv_result = convert_bygglosen_data(
+        
+        if download_format == 'csv':
+            _, csv_result, header_data = convert_bygglosen_data(
                 xml_streams, csv_stream, include_csv=True,
-                override_start=override_start, override_end=override_end
+                override_start=override_start, override_end=override_end, mode=mode
             )
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
-                zf.writestr(f'LOSEN_konverterad_{timestamp}.xml', xml_result.getvalue())
-                zf.writestr(f'LOSEN_konverterad_{timestamp}.csv', csv_result.getvalue())
-            zip_buffer.seek(0)
+            start_date = header_data.get('LoneperiodStartdatum', '')
+            period_str = start_date[:6] if len(start_date) >= 6 else datetime.now().strftime('%Y%m')
+            
             return send_file(
-                zip_buffer,
+                csv_result,
                 as_attachment=True,
-                download_name=f'LOSEN_export_{timestamp}.zip',
-                mimetype='application/zip'
+                download_name=f'LOSEN_konverterad_{period_str}.csv',
+                mimetype='text/csv'
             )
         else:
-            result_stream = convert_bygglosen_data(
+            xml_result, header_data = convert_bygglosen_data(
                 xml_streams, csv_stream, include_csv=False,
-                override_start=override_start, override_end=override_end
+                override_start=override_start, override_end=override_end, mode=mode
             )
+            start_date = header_data.get('LoneperiodStartdatum', '')
+            period_str = start_date[:6] if len(start_date) >= 6 else datetime.now().strftime('%Y%m')
+            
             return send_file(
-                result_stream,
+                xml_result,
                 as_attachment=True,
-                download_name=f'LOSEN_konverterad_{timestamp}.xml',
+                download_name=f'LOSEN_konverterad_{period_str}.xml',
                 mimetype='application/xml'
             )
     except Exception as e:
