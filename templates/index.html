@@ -157,96 +157,6 @@
             margin-top: 0.35rem;
         }
 
-        .user-bar {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .user-bar-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-        }
-
-        .admin-link {
-            color: #2563eb;
-            text-decoration: none;
-            font-weight: 600;
-            background: white;
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            font-size: 0.8rem;
-        }
-
-        .logout-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            font-weight: 600;
-            cursor: pointer;
-            width: auto;
-            padding: 0;
-            font-size: 0.85rem;
-            transition: color 0.2s;
-        }
-
-        .logout-btn:hover {
-            color: #b91c1c;
-        }
-
-        .login-area {
-            text-align: center;
-            padding: 2rem 0;
-        }
-
-        .sign-in-btn {
-            display: inline-block;
-            padding: 0.75rem 2rem;
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .sign-in-btn:hover {
-            background-color: #1d4ed8;
-            transform: translateY(-1px);
-        }
-
-        .security-notice {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 14px;
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        .security-notice p {
-            margin: 0;
-            font-size: 0.8rem;
-            color: #0369a1;
-            line-height: 1.4;
-        }
-
         .privacy-notice {
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
@@ -396,23 +306,6 @@
             }
         }
     </style>
-    <!-- Clerk JS Loader -->
-    <script>
-        (function () {
-            var pk = "{{ publishable_key }}";
-            if (!pk) return;
-            var encoded = pk.split('_')[2];
-            var padded = encoded + '==='.slice((encoded.length + 3) % 4 || 4);
-            var frontendApi = atob(padded).replace(/\$$/, '');
-            var script = document.createElement('script');
-            script.async = true;
-            script.crossOrigin = 'anonymous';
-            script.dataset.clerkPublishableKey = pk;
-            script.src = 'https://' + frontendApi + '/npm/@clerk/clerk-js@latest/dist/clerk.browser.js';
-            script.type = 'text/javascript';
-            document.head.appendChild(script);
-        })();
-    </script>
 </head>
 
 <body>
@@ -429,20 +322,9 @@
         {% endif %}
         {% endwith %}
 
-        <!-- Logged-in view -->
-        <div id="signed-in-view" style="display:none;">
-            <div class="user-bar">
-                <div class="user-bar-left">
-                    <img id="user-avatar" class="user-avatar" src="" alt="Avatar" style="display:none;">
-                    <span>Inloggad: <strong id="user-name"></strong></span>
-                    <a id="admin-link" href="/admin" class="admin-link" style="display:none;">Admin</a>
-                </div>
-                <button class="logout-btn" id="sign-out-btn">Logga ut</button>
-            </div>
-
+        <div id="signed-in-view">
             <!-- Form: containing all elements so they are submitted to /convert together -->
             <form action="/convert" method="post" enctype="multipart/form-data" id="convert-form">
-                <input type="hidden" name="clerk_token" id="clerk_token">
                 <input type="hidden" name="mode" id="mode-input" value="projekt">
                 <input type="hidden" name="format" id="download-format-input" value="xml">
 
@@ -461,8 +343,8 @@
                         <div class="mode-option active" id="mode-project-btn" onclick="setMode('projekt')">
                             <div class="mode-icon">🏗️</div>
                             <div class="mode-text">
-                                <strong>Projekt-läge (GRK)</strong>
-                                <span>Län & kommun hämtas från projekt i XML. Ingen CSV krävs.</span>
+                                <strong>Projekt-läge</strong>
+                                <span>Län & Kommun hämtas via projekt i Kontek.</span>
                             </div>
                         </div>
                         <div class="mode-option" id="mode-employee-btn" onclick="setMode('anstalld')">
@@ -567,44 +449,23 @@
                 </div>
             </form>
         </div>
-
-        <!-- Logged-out view -->
-        <div id="signed-out-view" style="display:none;">
-            <div class="login-area">
-                <p style="margin-bottom: 1.5rem; color: #475569; font-weight: 500;">Inloggning krävs för att använda verktyget.</p>
-                <div class="security-notice" style="max-width: 350px; margin: 0 auto 2rem;">
-                    <p>
-                        <strong>Säker anslutning</strong><br>
-                        Vi skyddar dina uppgifter genom säker inloggning via Clerk. Lösenord hanteras aldrig direkt av oss.
-                    </p>
-                </div>
-                <button class="sign-in-btn" id="sign-in-btn">Logga in</button>
-            </div>
-        </div>
-
-        <!-- Loading state -->
-        <div id="loading-view" style="text-align:center; padding: 3rem; color: #64748b; font-weight: 500;">
-            Laddar verktyget...
-        </div>
     </div>
 
     <script>
-        const ADMIN_EMAIL = "{{ admin_email }}";
-
         // Segmented control setting
         function setMode(mode) {
             document.getElementById('mode-input').value = mode;
-            
+
             const projectBtn = document.getElementById('mode-project-btn');
             const employeeBtn = document.getElementById('mode-employee-btn');
             const csvSection = document.getElementById('csv-section');
             const csvInput = document.getElementById('csv_file');
-            
+
             if (mode === 'projekt') {
                 projectBtn.classList.add('active');
                 employeeBtn.classList.remove('active');
                 csvSection.style.display = 'none';
-                csvInput.value = ''; // Clear value if selected mode changes
+                csvInput.value = '';
                 csvInput.required = false;
             } else {
                 projectBtn.classList.remove('active');
@@ -619,52 +480,20 @@
             document.getElementById('step-upload').style.display = 'block';
         }
 
-        async function triggerDownload(format) {
+        function triggerDownload(format) {
             const form = document.getElementById('convert-form');
             document.getElementById('download-format-input').value = format;
-            
-            try {
-                const token = await window.Clerk.session.getToken();
-                document.getElementById('clerk_token').value = token || '';
-                form.submit();
-            } catch (err) {
-                console.error("Token fetch error:", err);
-                alert("Sessionen kan ha löpt ut. Vänligen ladda om sidan.");
-            }
+            form.submit();
         }
 
-        window.addEventListener('load', async function () {
-            await window.Clerk.load();
-
-            const loadingView = document.getElementById('loading-view');
-            const signedInView = document.getElementById('signed-in-view');
-            const signedOutView = document.getElementById('signed-out-view');
-
-            loadingView.style.display = 'none';
-
-            if (window.Clerk.user) {
-                showSignedIn(window.Clerk.user);
-            } else {
-                signedOutView.style.display = 'block';
-            }
-
-            document.getElementById('sign-in-btn').addEventListener('click', function () {
-                window.Clerk.openSignIn();
-            });
-
-            document.getElementById('sign-out-btn').addEventListener('click', async function () {
-                await window.Clerk.signOut();
-                window.location.reload();
-            });
-
-            // Step 1 -> Step 2 analysis fetch
+        window.addEventListener('load', function () {
             document.getElementById('btn-to-review').addEventListener('click', async function () {
                 const xmlInput = document.getElementById('xml_files');
                 if (!xmlInput.files || xmlInput.files.length === 0) {
                     alert("Du måste välja minst en XML-fil.");
                     return;
                 }
-                
+
                 const mode = document.getElementById('mode-input').value;
                 const csvInput = document.getElementById('csv_file');
                 if (mode === 'anstalld' && (!csvInput.files || csvInput.files.length === 0)) {
@@ -679,53 +508,49 @@
 
                 try {
                     const form = document.getElementById('convert-form');
-                    const token = await window.Clerk.session.getToken();
-                    document.getElementById('clerk_token').value = token || '';
-                    
                     const formData = new FormData(form);
                     const res = await fetch('/analyze', {
                         method: 'POST',
                         body: formData
                     });
-                    
+
                     if (!res.ok) {
                         const err = await res.json();
                         throw new Error(err.error || 'Ett fel uppstod vid analysen.');
                     }
-                    
+
                     const data = await res.json();
-                    
-                    // Transition to step 2
+
                     document.getElementById('step-upload').style.display = 'none';
                     document.getElementById('step-review').style.display = 'block';
-                    
+
                     const tbody = document.getElementById('warnings-table-body');
                     const warningMsg = document.getElementById('review-warning-msg');
                     const successMsg = document.getElementById('review-success-msg');
                     const pdfBtn = document.getElementById('btn-download-pdf');
-                    
+
                     tbody.innerHTML = '';
-                    
+
                     if (data.warnings && data.warnings.length > 0) {
                         warningMsg.style.display = 'block';
                         successMsg.style.display = 'none';
                         pdfBtn.style.display = 'inline-flex';
-                        
+
                         data.warnings.forEach(w => {
                             const tr = document.createElement('tr');
-                            
+
                             const tdNamn = document.createElement('td');
                             tdNamn.textContent = w.namn;
                             tr.appendChild(tdNamn);
-                            
+
                             const tdPnr = document.createElement('td');
                             tdPnr.textContent = w.pnr;
                             tr.appendChild(tdPnr);
-                            
+
                             const tdLan = document.createElement('td');
                             tdLan.textContent = w.lankod || '–';
                             tr.appendChild(tdLan);
-                            
+
                             const tdMissing = document.createElement('td');
                             w.missing.forEach(m => {
                                 const badge = document.createElement('span');
@@ -734,14 +559,14 @@
                                 tdMissing.appendChild(badge);
                             });
                             tr.appendChild(tdMissing);
-                            
+
                             tbody.appendChild(tr);
                         });
                     } else {
                         warningMsg.style.display = 'none';
                         successMsg.style.display = 'block';
                         pdfBtn.style.display = 'none';
-                        
+
                         const tr = document.createElement('tr');
                         const td = document.createElement('td');
                         td.colSpan = 4;
@@ -759,39 +584,7 @@
                     btn.textContent = originalText;
                 }
             });
-
-            window.Clerk.addListener(({ user }) => {
-                if (user) {
-                    loadingView.style.display = 'none';
-                    signedOutView.style.display = 'none';
-                    showSignedIn(user);
-                } else {
-                    signedInView.style.display = 'none';
-                    signedOutView.style.display = 'block';
-                }
-            });
         });
-
-        function showSignedIn(user) {
-            const signedInView = document.getElementById('signed-in-view');
-            signedInView.style.display = 'block';
-
-            const name = [user.firstName, user.lastName].filter(Boolean).join(' ')
-                || user.primaryEmailAddress?.emailAddress
-                || 'Användare';
-            document.getElementById('user-name').textContent = name;
-
-            if (user.imageUrl) {
-                const avatar = document.getElementById('user-avatar');
-                avatar.src = user.imageUrl;
-                avatar.style.display = 'inline-block';
-            }
-
-            const email = user.primaryEmailAddress?.emailAddress || '';
-            if (email === ADMIN_EMAIL) {
-                document.getElementById('admin-link').style.display = 'inline-block';
-            }
-        }
 
         // Date check logic
         async function checkXMLDates(input) {

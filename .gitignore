@@ -6,6 +6,7 @@ instance/
 migrations/
 *.db
 venv/
+.venv/
 .idea/
 .vscode/
 # Clerk / local dev
