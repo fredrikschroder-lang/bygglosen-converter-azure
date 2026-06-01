@@ -124,9 +124,108 @@ def test_project_mode():
     assert header['LoneperiodStartdatum'] == '20260401', "Startdatum stämmer inte."
     print("SUCCESS: Projekt-läge fungerar felfritt!")
 
+def test_project_mode_keeps_person_separate_per_lankod():
+    """
+    I projekt-läge utan CSV ska samma personnummer på olika län/kommun
+    aldrig slås ihop — varje (pnr, länkod)-kombination är en egen post
+    med egna arbetade timmar.
+    """
+    print("\n--- TEST 2: PROJEKT-LÄGE bevarar separation per länkod ---")
+
+    # En och samma person (Erik) i två olika Lonegranskning-block:
+    # länkod 0114 med 10h, länkod 1480 med 25h. Får INTE bli en post med 35h.
+    xml_str = """<?xml version="1.0" encoding="ISO-8859-1"?>
+<Lista_lonegranskning>
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>Testbolag AB</Foretagsnamn>
+    <LoneperiodStartdatum>20260401</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20260430</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <LanOchKommun>0114</LanOchKommun>
+    <Personer>
+      <Person>
+        <Personnummer>198802680374</Personnummer>
+        <Namn>Erik Eriksson</Namn>
+        <Yrkeskod>123</Yrkeskod>
+        <Fordelningstal>100</Fordelningstal>
+        <ArbetadeTimmar>10</ArbetadeTimmar>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>Testbolag AB</Foretagsnamn>
+    <LoneperiodStartdatum>20260401</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20260430</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <LanOchKommun>1480</LanOchKommun>
+    <Personer>
+      <Person>
+        <Personnummer>198802680374</Personnummer>
+        <Namn>Erik Eriksson</Namn>
+        <Yrkeskod>123</Yrkeskod>
+        <Fordelningstal>100</Fordelningstal>
+        <ArbetadeTimmar>25</ArbetadeTimmar>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+</Lista_lonegranskning>
+"""
+    xml_stream = io.BytesIO(xml_str.encode('iso-8859-1'))
+    xml_io, _csv_io, _header = convert_bygglosen_data(
+        [xml_stream], include_csv=True, mode='projekt'
+    )
+    root = ET.fromstring(xml_io.getvalue().decode('iso-8859-1'))
+
+    # Förväntat: två Lonegranskning-block, ett per länkod, var och en
+    # innehåller Erik med originaltimmarna.
+    blocks = root.findall('Lonegranskning')
+    assert len(blocks) == 2, f"Förväntade 2 länkod-block, fick {len(blocks)}"
+
+    timmar_per_lankod = {}
+    for block in blocks:
+        lankod = block.findtext('LanOchKommun')
+        persons = block.findall('.//Person')
+        assert len(persons) == 1, (
+            f"Länkod {lankod} ska ha exakt en Erik-post, fick {len(persons)}"
+        )
+        timmar_per_lankod[lankod] = persons[0].findtext('ArbetadeTimmar')
+
+    assert timmar_per_lankod.get('0114') == '10', (
+        f"Länkod 0114 ska ha 10h, fick {timmar_per_lankod.get('0114')!r} "
+        f"(är personerna felaktigt sammanslagna?)"
+    )
+    assert timmar_per_lankod.get('1480') == '25', (
+        f"Länkod 1480 ska ha 25h, fick {timmar_per_lankod.get('1480')!r} "
+        f"(är personerna felaktigt sammanslagna?)"
+    )
+    print("SUCCESS: Erik förekommer separat på båda länkoderna med rätt timmar.")
+
+    # Regressionsskydd: i anställd-läge (utan CSV) ska samma person istället
+    # slås ihop till EN post med summerade timmar (35h). Om detta beteende
+    # ändras vill vi att projekt-test ovan fortfarande fångar regression.
+    xml_stream2 = io.BytesIO(xml_str.encode('iso-8859-1'))
+    xml_io2, _ = convert_bygglosen_data(
+        [xml_stream2], include_csv=False, mode='anstalld'
+    )
+    root2 = ET.fromstring(xml_io2.getvalue().decode('iso-8859-1'))
+    all_persons = root2.findall('.//Person')
+    assert len(all_persons) == 1, (
+        f"Anställd-läge ska slå ihop Erik till EN post, fick {len(all_persons)}"
+    )
+    assert float(all_persons[0].findtext('ArbetadeTimmar')) == 35.0, (
+        "Anställd-läge ska summera timmar till 35h"
+    )
+    print("SUCCESS: Anställd-läge slår fortfarande ihop personen (sanity-check).")
+
+
 if __name__ == "__main__":
     try:
         test_project_mode()
+        test_project_mode_keeps_person_separate_per_lankod()
         print("\nALLA TESTER GODKÄNDA!")
     except AssertionError as e:
         print(f"\nTEST MISSLYCKADES: {e}")
