@@ -16,7 +16,6 @@ env/
 *.log
 *.sqlite
 instance/
-kommunlankod-2026.xlsx
 Byggnads LänKommun_formatted (1).csv
 
 # Docker
