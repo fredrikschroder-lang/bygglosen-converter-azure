@@ -79,8 +79,8 @@ def test_project_mode():
     warnings = analyze_bygglosen_data([xml_stream], mode='projekt')
     print(f"Hittade {len(warnings)} varningar:")
     for w in warnings:
-        print(f"  - {w['namn']} ({w['pnr']}) på ort {w['lankod']} saknar {w['missing']}")
-    
+        print(f"  - {w['namn']} ({w['pnr']}) saknar {w['missing']}")
+
     # Verifiera att Viktor (saknar fördelningstal) och Anna (saknar yrkeskod) flaggas
     warning_pnrs = [w['pnr'] for w in warnings]
     assert clean_personnr("199108125015") in warning_pnrs, "Viktor bode flaggas!"
@@ -222,10 +222,74 @@ def test_project_mode_keeps_person_separate_per_lankod():
     print("SUCCESS: Anställd-läge slår fortfarande ihop personen (sanity-check).")
 
 
+def test_analyze_deduplicates_warnings_by_pnr():
+    """
+    En person som saknar Fördelningstal/Yrkeskod och förekommer på flera
+    Län/Kommun i projekt-läge ska bara dyka upp EN gång i granskningen
+    (datan ligger på personnivå i Kontek).
+    """
+    print("\n--- TEST 3: Granskning deduperar varningar per personnummer ---")
+
+    # Samma person, samma saknade fält, på två länkoder.
+    xml_str = """<?xml version="1.0" encoding="ISO-8859-1"?>
+<Lista_lonegranskning>
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>Testbolag AB</Foretagsnamn>
+    <LoneperiodStartdatum>20260401</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20260430</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <LanOchKommun>0114</LanOchKommun>
+    <Personer>
+      <Person>
+        <Personnummer>199108125015</Personnummer>
+        <Namn>Viktor Halin</Namn>
+        <Yrkeskod>456</Yrkeskod>
+        <Fordelningstal>0</Fordelningstal>
+        <ArbetadeTimmar>10</ArbetadeTimmar>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>Testbolag AB</Foretagsnamn>
+    <LoneperiodStartdatum>20260401</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20260430</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <LanOchKommun>1480</LanOchKommun>
+    <Personer>
+      <Person>
+        <Personnummer>199108125015</Personnummer>
+        <Namn>Viktor Halin</Namn>
+        <Yrkeskod>456</Yrkeskod>
+        <Fordelningstal>0</Fordelningstal>
+        <ArbetadeTimmar>25</ArbetadeTimmar>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+</Lista_lonegranskning>
+"""
+    xml_stream = io.BytesIO(xml_str.encode('iso-8859-1'))
+    warnings = analyze_bygglosen_data([xml_stream], mode='projekt')
+
+    viktor_warnings = [w for w in warnings if w['pnr'] == clean_personnr("199108125015")]
+    assert len(viktor_warnings) == 1, (
+        f"Viktor ska visas exakt EN gång i granskningen, fick {len(viktor_warnings)}"
+    )
+    assert 'lankod' not in viktor_warnings[0], (
+        "Varningar ska inte längre exponera 'lankod' (datan är personnivå)"
+    )
+    assert 'Fördelningstal' in viktor_warnings[0]['missing']
+    print("SUCCESS: Viktor visas en gång, utan länkod-fält.")
+
+
 if __name__ == "__main__":
     try:
         test_project_mode()
         test_project_mode_keeps_person_separate_per_lankod()
+        test_analyze_deduplicates_warnings_by_pnr()
         print("\nALLA TESTER GODKÄNDA!")
     except AssertionError as e:
         print(f"\nTEST MISSLYCKADES: {e}")

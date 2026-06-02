@@ -424,7 +424,6 @@
                                 <tr>
                                     <th>Namn</th>
                                     <th>Personnummer</th>
-                                    <th>Län/Kommun</th>
                                     <th>Saknad information</th>
                                 </tr>
                             </thead>
@@ -435,9 +434,14 @@
                     </div>
 
                     <div class="download-actions-grid">
-                        <button type="button" class="btn btn-success" onclick="triggerDownload('xml')">
-                            📥 Ladda ner XML-rapport
-                        </button>
+                        <div>
+                            <button type="button" class="btn btn-success btn-block" onclick="triggerDownload('xml')">
+                                Exportera Bygglösen Fil
+                            </button>
+                            <div class="hint" style="text-align: center; margin-top: 0.4rem;">
+                                Personer som saknar Fördelningstal eller Yrkeskod tas inte med.
+                            </div>
+                        </div>
                         <button type="button" class="btn btn-primary" onclick="triggerDownload('csv')">
                             📊 Ladda ner CSV-rapport
                         </button>
@@ -547,10 +551,6 @@
                             tdPnr.textContent = w.pnr;
                             tr.appendChild(tdPnr);
 
-                            const tdLan = document.createElement('td');
-                            tdLan.textContent = w.lankod || '–';
-                            tr.appendChild(tdLan);
-
                             const tdMissing = document.createElement('td');
                             w.missing.forEach(m => {
                                 const badge = document.createElement('span');
@@ -569,7 +569,7 @@
 
                         const tr = document.createElement('tr');
                         const td = document.createElement('td');
-                        td.colSpan = 4;
+                        td.colSpan = 3;
                         td.style.textAlign = 'center';
                         td.style.color = '#64748b';
                         td.style.padding = '20px';
@@ -679,18 +679,17 @@
             const rows = document.querySelectorAll("#warnings-table-body tr");
             rows.forEach(row => {
                 const cols = row.querySelectorAll("td");
-                if (cols.length >= 4) {
+                if (cols.length >= 3) {
                     tableData.push([
                         cols[0].textContent,
                         cols[1].textContent,
-                        cols[2].textContent,
-                        cols[3].textContent
+                        cols[2].textContent
                     ]);
                 }
             });
-            
+
             doc.autoTable({
-                head: [['Namn', 'Personnummer', 'Län/Kommun', 'Saknad information']],
+                head: [['Namn', 'Personnummer', 'Saknad information']],
                 body: tableData,
                 startY: 35,
                 theme: 'striped',

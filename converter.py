@@ -338,11 +338,21 @@ def analyze_bygglosen_data(xml_file_streams, csv_file_stream=None, default_lanko
     )
     
     warnings = []
-    
-    for lankod, person_list in grouped_persons.items():
+    seen_pnrs = set()
+
+    for _lankod, person_list in grouped_persons.items():
         for person in person_list:
+            pnr_raw = person.findtext('Personnummer') or 'Okänt'
+            pnr_clean = clean_personnr(pnr_raw)
+
+            # Fördelningstal och Yrkeskod ligger på personnivå i Kontek,
+            # så vi rapporterar varje person max en gång även om hen
+            # förekommer på flera Län/Kommun i projekt-läge.
+            if pnr_clean in seen_pnrs:
+                continue
+
             missing = []
-            
+
             ft_elem = person.find('Fordelningstal')
             ft_text = ft_elem.text.strip() if ft_elem is not None and ft_elem.text else "0"
             try:
@@ -350,14 +360,14 @@ def analyze_bygglosen_data(xml_file_streams, csv_file_stream=None, default_lanko
                     missing.append("Fördelningstal")
             except (ValueError, TypeError):
                 missing.append("Fördelningstal")
-                
+
             yk_elem = person.find('Yrkeskod')
             yk_text = yk_elem.text.strip() if yk_elem is not None and yk_elem.text else "0"
             if yk_text == "0" or not yk_text:
                 missing.append("Yrkeskod")
-                
+
             if missing:
-                pnr = person.findtext('Personnummer') or 'Okänt'
+                seen_pnrs.add(pnr_clean)
                 namn = person.findtext('Namn')
                 if not namn:
                     fornamn = person.findtext('Fornamn') or ''
@@ -365,14 +375,13 @@ def analyze_bygglosen_data(xml_file_streams, csv_file_stream=None, default_lanko
                     namn = f"{fornamn} {efternamn}".strip()
                 if not namn:
                     namn = "Okänt namn"
-                    
+
                 warnings.append({
-                    "pnr": clean_personnr(pnr),
+                    "pnr": pnr_clean,
                     "namn": namn,
                     "missing": missing,
-                    "lankod": lankod
                 })
-                
+
     return warnings
 
 def convert_bygglosen_data(xml_file_streams, csv_file_stream=None, default_lankod="1293", include_csv=False, override_start=None, override_end=None, mode="anstalld"):
