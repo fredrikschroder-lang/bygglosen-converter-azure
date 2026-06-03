@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="sv">
+<head>
+    <meta charset="utf-8">
+    <title>Bygglösen Converter - Test Runner</title>
+    <script src="converter.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f1f5f9; }
+        h1 { color: #1e3a8a; }
+        .test-case { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .pass { border-left: 6px solid #10b981; }
+        .fail { border-left: 6px solid #ef4444; }
+        .status { font-weight: bold; }
+        .status.pass { color: #10b981; }
+        .status.fail { color: #ef4444; }
+        pre { background: #f8fafc; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <h1>Bygglösen JS Converter — Testresultat</h1>
+    <div id="results">Kör tester...</div>
+
+    <script>
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+
+        function logTest(name, passed, detail = '') {
+            const div = document.createElement('div');
+            div.className = `test-case ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `
+                <h3>${name}: <span class="status ${passed ? 'pass' : 'fail'}">${passed ? 'GODKÄND' : 'MISSLYCKADES'}</span></h3>
+                ${detail ? `<pre>${detail}</pre>` : ''}
+            `;
+            resultsDiv.appendChild(div);
+        }
+
+        // Mock data from test_new_logic.py
+        const mockXmlProjectMode = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<Lonerapport>
+  <!-- Första orter: LanOchKommun 0662 -->
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>GRK Sverige AB</Foretagsnamn>
+    <LoneperiodStartdatum>20260401</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20260430</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <LanOchKommun>0662</LanOchKommun>
+    <Postort>Gagnef</Postort>
+    <Personer>
+      <!-- Erik: giltig -->
+      <Person>
+        <Personnummer>198802680374</Personnummer>
+        <Namn>Erik Eriksson</Namn>
+        <Yrkeskod>123</Yrkeskod>
+        <Fordelningstal>100</Fordelningstal>
+        <ArbetadeTimmar>40</ArbetadeTimmar>
+      </Person>
+      <!-- Viktor: saknar fördelningstal -->
+      <Person>
+        <Personnummer>199108125015</Personnummer>
+        <Namn>Viktor Halin</Namn>
+        <Yrkeskod>456</Yrkeskod>
+        <Fordelningstal>0</Fordelningstal>
+        <ArbetadeTimmar>80</ArbetadeTimmar>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+
+  <!-- Andra orter: LanOchKommun 1293 -->
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>GRK Sverige AB</Foretagsnamn>
+    <LoneperiodStartdatum>20260401</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20260430</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <LanOchKommun>1293</LanOchKommun>
+    <Postort>Landskrona</Postort>
+    <Personer>
+      <!-- Erik: Arbetar även här, giltig -->
+      <Person>
+        <Personnummer>198802680374</Personnummer>
+        <Namn>Erik Eriksson</Namn>
+        <Yrkeskod>123</Yrkeskod>
+        <Fordelningstal>100</Fordelningstal>
+        <ArbetadeTimmar>60</ArbetadeTimmar>
+      </Person>
+      <!-- Anna: saknar Yrkeskod -->
+      <Person>
+        <Personnummer>199202055621</Personnummer>
+        <Namn>Anna Carlsson</Namn>
+        <Yrkeskod>0</Yrkeskod>
+        <Fordelningstal>100</Fordelningstal>
+        <ArbetadeTimmar>50</ArbetadeTimmar>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+</Lonerapport>`;
+
+        // Mock data from test_logic.py
+        const mockCsvEmployeeMode = `Anst.id; Namn ; länkOD ; personnummer ; YRKESKOD ; fördelningstal ;
+1;Anders Andersson;0662;900101-1234;123;100;
+2;Bertil Bengtsson;1280;920202-5678;456;80;
+3;Cecilia Carlsson;1293;800101-9999;833215;50;`;
+
+        const mockXmlEmployeeMode = `<?xml version="1.0" encoding="ISO-8859-1"?>
+<Lonerapport>
+  <Lonegranskning>
+    <Organisationsnummer>556000-0000</Organisationsnummer>
+    <Foretagsnamn>Testbolaget AB</Foretagsnamn>
+    <LoneperiodStartdatum>20231001</LoneperiodStartdatum>
+    <LoneperiodSlutdatum>20231031</LoneperiodSlutdatum>
+    <Avtalsomrade>Bygg</Avtalsomrade>
+    <Lonetyp>Timlon</Lonetyp>
+    <Postort>Teststad</Postort>
+    <Personer>
+      <Person>
+        <Personnummer>199001011234</Personnummer>
+        <Namn>Anders Andersson</Namn>
+        <Yrkeskod>123</Yrkeskod>
+        <Fordelningstal>100</Fordelningstal>
+        <Lon>30000</Lon>
+      </Person>
+      <Person>
+        <Personnummer>199202025678</Personnummer>
+        <Namn>Bertil Bengtsson</Namn>
+        <Yrkeskod>456</Yrkeskod>
+        <Fordelningstal>80</Fordelningstal>
+        <Lon>32000</Lon>
+      </Person>
+       <Person>
+        <Personnummer>198001019999</Personnummer>
+        <Namn>Cecilia Carlsson</Namn>
+        <Yrkeskod>0</Yrkeskod>
+        <Fordelningstal>0</Fordelningstal>
+        <Lon>35000</Lon>
+      </Person>
+    </Personer>
+  </Lonegranskning>
+</Lonerapport>`;
+
+        try {
+            // Test 1: Projekt-läge analys/varningar
+            (function test1() {
+                const warnings = BygglosenConverter.analyzeBygglosenData([mockXmlProjectMode], null, "1293", "projekt");
+                
+                const hasViktor = warnings.some(w => w.pnr === "9108125015" && w.missing.includes("Fördelningstal"));
+                const hasAnna = warnings.some(w => w.pnr === "9202055621" && w.missing.includes("Yrkeskod"));
+                
+                const passed = warnings.length === 2 && hasViktor && hasAnna;
+                logTest("Test 1: Analys i Projekt-läge (Varningar)", passed, `Hittade varningar för: ${JSON.stringify(warnings, null, 2)}`);
+            })();
+
+            // Test 2: Projekt-läge konvertering och separation per länkod
+            (function test2() {
+                const { xmlContent, csvContent, headerData } = BygglosenConverter.convertBygglosenData(
+                    [mockXmlProjectMode], null, "1293", null, null, "projekt", true
+                );
+
+                // Kontrollera XML-innehåll
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(xmlContent, "application/xml");
+                const persons = doc.querySelectorAll('Person');
+                
+                // Endast Erik Eriksson (två gånger på olika länkoder) ska finnas
+                let allErik = true;
+                persons.forEach(p => {
+                    const pnr = BygglosenConverter.cleanPersonnr(p.querySelector('Personnummer').textContent);
+                    if (pnr !== "8802680374") allErik = false;
+                });
+
+                const correctCount = (persons.length === 2);
+                const hasLankod0662 = xmlContent.includes('<LanOchKommun>0662</LanOchKommun>');
+                const hasLankod1293 = xmlContent.includes('<LanOchKommun>1293</LanOchKommun>');
+                
+                const passed = allErik && correctCount && hasLankod0662 && hasLankod1293;
+                logTest("Test 2: Konvertering i Projekt-läge (Separation och filtrering)", passed, 
+                    `Antal personer i XML: ${persons.length} (förväntat 2, endast Erik Eriksson)\n` +
+                    `Hittade länkod 0662: ${hasLankod0662}\n` +
+                    `Hittade länkod 1293: ${hasLankod1293}\n` +
+                    `CSV-innehåll:\n${csvContent}`
+                );
+            })();
+
+            // Test 3: Anställd-läge konvertering med CSV-fallback
+            (function test3() {
+                const { xmlContent, csvContent } = BygglosenConverter.convertBygglosenData(
+                    [mockXmlEmployeeMode], mockCsvEmployeeMode, "1293", null, null, "anstalld", true
+                );
+
+                // Cecilia Carlsson hade Yrkeskod=0, Fordelningstal=0 i XML.
+                // Ska ha fyllts i från CSV till Yrkeskod=833215 och Fordelningstal=50.
+                const hasCeciliaFallbackXml = xmlContent.includes('<Yrkeskod>833215</Yrkeskod>') && xmlContent.includes('<Fordelningstal>50</Fordelningstal>');
+                const hasCeciliaFallbackCsv = csvContent.includes('833215') && csvContent.includes('50');
+
+                // Anders och Bertil ska också finnas med.
+                const hasAnders = xmlContent.includes('Anders Andersson');
+                const hasBertil = xmlContent.includes('Bertil Bengtsson');
+                const hasCecilia = xmlContent.includes('Cecilia Carlsson');
+
+                const passed = hasCeciliaFallbackXml && hasCeciliaFallbackCsv && hasAnders && hasBertil && hasCecilia;
+                logTest("Test 3: Konvertering i Anställd-läge (CSV-fallback)", passed,
+                    `Cecilia fylls i korrekt i XML: ${hasCeciliaFallbackXml}\n` +
+                    `Cecilia fylls i korrekt i CSV: ${hasCeciliaFallbackCsv}\n` +
+                    `Anders Andersson i export: ${hasAnders}\n` +
+                    `Bertil Bengtsson i export: ${hasBertil}\n` +
+                    `Cecilia Carlsson i export: ${hasCecilia}`
+                );
+            })();
+
+            // Test 4: Kodning av Windows-1252 (ISO-8859-1)
+            (function test4() {
+                const testStr = "ÅÄÖåäöé";
+                const bytes = BygglosenConverter.encodeISO88591(testStr);
+                
+                // Kontrollera byte-koderna för svenska tecken i ISO-8859-1
+                // Å: 197, Ä: 196, Ö: 214, å: 229, ä: 228, ö: 246, é: 233
+                const expected = [197, 196, 214, 229, 228, 246, 233];
+                let match = true;
+                for (let i = 0; i < expected.length; i++) {
+                    if (bytes[i] !== expected[i]) match = false;
+                }
+
+                logTest("Test 4: Windows-1252 teckenkodning", match, 
+                    `Input: ${testStr}\n` +
+                    `Förväntade bytes: ${JSON.stringify(expected)}\n` +
+                    `Genererade bytes: ${JSON.stringify(Array.from(bytes))}`
+                );
+            })();
+
+        } catch (err) {
+            logTest("Undantag under testkörning", false, err.stack);
+        }
+    </script>
+</body>
+</html>

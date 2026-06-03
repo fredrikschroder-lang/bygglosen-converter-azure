@@ -12,6 +12,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
+    <!-- Converter Logic -->
+    <script src="converter.js"></script>
+
     <style>
         body {
             font-family: 'Outfit', sans-serif;
@@ -286,19 +289,110 @@
             color: #15803d;
         }
 
-        .download-actions-grid {
+        .logo-container {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+        }
+        .logo-container img {
+            height: 32px;
+            width: auto;
+            opacity: 0.85;
+        }
+
+        .export-section {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .export-section h2 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            color: #1e3a8a;
+            font-weight: 700;
+        }
+
+        .export-notice {
+            background-color: #fffbeb;
+            border: 1px solid #fef3c7;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 1.25rem;
+            font-size: 0.8rem;
+            color: #b45309;
+            line-height: 1.4;
+        }
+
+        .export-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .export-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .export-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04);
+            border-color: #cbd5e1;
+        }
+
+        .export-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.95rem;
+            color: #1e293b;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .export-card p {
+            margin: 0 0 1.25rem 0;
+            font-size: 0.80rem;
+            color: #64748b;
+            line-height: 1.4;
+            flex-grow: 1;
+            text-align: left;
+        }
+
+        .export-card .btn {
+            font-size: 0.85rem;
+            padding: 10px 16px;
+        }
+
+        @media (max-width: 768px) {
+            .logo-container {
+                position: static;
+                margin-bottom: 1.5rem;
+                display: flex;
+                justify-content: center;
+            }
+            body {
+                flex-direction: column;
+                align-items: center;
+                padding-top: 1rem;
+            }
         }
 
         @media (max-width: 600px) {
             .mode-selector {
                 flex-direction: column;
             }
-            .download-actions-grid {
+            .export-grid {
                 grid-template-columns: 1fr;
             }
             .container {
@@ -309,31 +403,27 @@
 </head>
 
 <body>
+    <div class="logo-container">
+        <img src="img/exsitec_logo_grey.svg" alt="Exsitec Logo">
+    </div>
+
     <div class="container">
         <h1>Bygglösen Konverterare</h1>
 
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for message in messages %}
-            <p>{{ message }}</p>
-            {% endfor %}
-        </div>
-        {% endif %}
-        {% endwith %}
+        <!-- Local Error Messages -->
+        <div id="error-message" class="flash-messages" style="display: none;"></div>
 
         <div id="signed-in-view">
-            <!-- Form: containing all elements so they are submitted to /convert together -->
-            <form action="/convert" method="post" enctype="multipart/form-data" id="convert-form">
+            <!-- Form: prevented default to handle everything locally -->
+            <form id="convert-form" onsubmit="event.preventDefault();">
                 <input type="hidden" name="mode" id="mode-input" value="projekt">
-                <input type="hidden" name="format" id="download-format-input" value="xml">
 
                 <!-- STEP 1: UPLOAD & SETTINGS -->
                 <div id="step-upload">
                     <div class="privacy-notice">
                         <p>
-                            <strong>Din data är säker</strong><br>
-                            Filer bearbetas direkt i minnet och sparas inte på servern.
+                            <strong>Din data stannar hos dig (GDPR-säkert)</strong><br>
+                            Filer bearbetas helt lokalt i din webbläsare. Inga person- eller löneuppgifter skickas till någon server.
                         </p>
                     </div>
 
@@ -350,7 +440,7 @@
                         <div class="mode-option" id="mode-employee-btn" onclick="setMode('anstalld')">
                             <div class="mode-icon">👤</div>
                             <div class="mode-text">
-                                <strong>Anställd-läge</strong>
+                                <strong>Anställd-läge / Hängavtal</strong>
                                 <span>Län & kommun styrs av personkort via CSV-fil.</span>
                             </div>
                         </div>
@@ -413,7 +503,7 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
                         <span style="font-weight: 600; font-size: 0.9rem; color: #475569;">Lista över granskade uppgifter</span>
                         <button type="button" class="btn btn-secondary" id="btn-download-pdf" onclick="downloadPDF()" style="padding: 6px 12px; font-size: 0.8rem;">
-                            📄 Ladda ner granskningsresultat (PDF)
+                            📄 Ladda ner Fellista (PDF)
                         </button>
                     </div>
 
@@ -433,18 +523,31 @@
                         </table>
                     </div>
 
-                    <div class="download-actions-grid">
-                        <div>
-                            <button type="button" class="btn btn-success btn-block" onclick="triggerDownload('xml')">
-                                Exportera Bygglösen Fil
-                            </button>
-                            <div class="hint" style="text-align: center; margin-top: 0.4rem;">
-                                Personer som saknar Fördelningstal eller Yrkeskod tas inte med.
+                    <div class="export-section">
+                        <h2>Exportera resultat</h2>
+                        <div class="export-notice">
+                            💡 <strong>Information:</strong> Personer med ofullständig data (som visas i fellistan ovan) exkluderas automatiskt från båda exportfilerna nedan.
+                        </div>
+                        <div class="export-grid">
+                            <div class="export-card">
+                                <div>
+                                    <h3>Bygglösen-fil (XML)</h3>
+                                    <p>Den slutgiltiga konverterade XML-filen i Byggnads-format som laddas upp till deras portal.</p>
+                                </div>
+                                <button type="button" class="btn btn-success btn-block" onclick="triggerDownload('xml')">
+                                    📥 Ladda ner XML-fil
+                                </button>
+                            </div>
+                            <div class="export-card">
+                                <div>
+                                    <h3>Kontrollrapport (CSV)</h3>
+                                    <p>En kalkylbladsrapport för eget bruk (t.ex. i Excel) för att granska de konverterade uppgifterna.</p>
+                                </div>
+                                <button type="button" class="btn btn-primary btn-block" onclick="triggerDownload('csv')">
+                                    📊 Ladda ner CSV-rapport
+                                </button>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary" onclick="triggerDownload('csv')">
-                            📊 Ladda ner CSV-rapport
-                        </button>
                     </div>
 
                     <button type="button" class="btn btn-secondary btn-block" onclick="goBack()" style="margin-top: 0.5rem;">
@@ -456,9 +559,67 @@
     </div>
 
     <script>
+        // Global variables to hold loaded data in memory
+        window.loadedXmlTexts = [];
+        window.loadedCsvText = null;
+        window.loadedMode = 'projekt';
+
+        // Helpers to read files client-side
+        function readFileAsText(file, encoding = 'utf-8') {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsText(file, encoding);
+            });
+        }
+
+        function readCsvFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const arrayBuffer = reader.result;
+                    let csvText = '';
+                    try {
+                        const decoderUtf8 = new TextDecoder('utf-8', { fatal: true });
+                        csvText = decoderUtf8.decode(arrayBuffer);
+                    } catch (e) {
+                        const decoder1252 = new TextDecoder('windows-1252');
+                        csvText = decoder1252.decode(arrayBuffer);
+                    }
+                    resolve(csvText);
+                };
+                reader.onerror = () => reject(reader.error);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showError(msg) {
+            const errDiv = document.getElementById('error-message');
+            errDiv.textContent = msg;
+            errDiv.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+
         // Segmented control setting
         function setMode(mode) {
             document.getElementById('mode-input').value = mode;
+            window.loadedMode = mode;
 
             const projectBtn = document.getElementById('mode-project-btn');
             const employeeBtn = document.getElementById('mode-employee-btn');
@@ -485,13 +646,42 @@
         }
 
         function triggerDownload(format) {
-            const form = document.getElementById('convert-form');
-            document.getElementById('download-format-input').value = format;
-            form.submit();
+            try {
+                hideError();
+                const overrideStart = document.getElementById('override_start').value;
+                const overrideEnd = document.getElementById('override_end').value;
+
+                const { xmlContent, csvContent, headerData } = BygglosenConverter.convertBygglosenData(
+                    window.loadedXmlTexts,
+                    window.loadedCsvText,
+                    "1293",
+                    overrideStart,
+                    overrideEnd,
+                    window.loadedMode,
+                    true
+                );
+
+                const startStr = headerData.LoneperiodStartdatum || '';
+                const periodStr = startStr.length >= 6 ? startStr.slice(0, 6) : new Date().toISOString().slice(0, 10).replace(/-/g, '').slice(0, 6);
+
+                if (format === 'csv') {
+                    const filename = `LOSEN_konverterad_${periodStr}.csv`;
+                    const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8' });
+                    downloadBlob(blob, filename);
+                } else {
+                    const filename = `LOSEN_konverterad_${periodStr}.xml`;
+                    const xmlBytes = BygglosenConverter.encodeISO88591(xmlContent);
+                    const blob = new Blob([xmlBytes], { type: 'application/xml;charset=iso-8859-1' });
+                    downloadBlob(blob, filename);
+                }
+            } catch (err) {
+                showError("Ett fel uppstod vid export: " + err.message);
+            }
         }
 
         window.addEventListener('load', function () {
             document.getElementById('btn-to-review').addEventListener('click', async function () {
+                hideError();
                 const xmlInput = document.getElementById('xml_files');
                 if (!xmlInput.files || xmlInput.files.length === 0) {
                     alert("Du måste välja minst en XML-fil.");
@@ -511,20 +701,30 @@
                 btn.textContent = 'Analyserar data...';
 
                 try {
-                    const form = document.getElementById('convert-form');
-                    const formData = new FormData(form);
-                    const res = await fetch('/analyze', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!res.ok) {
-                        const err = await res.json();
-                        throw new Error(err.error || 'Ett fel uppstod vid analysen.');
+                    // Read files into memory
+                    const xmlTexts = await Promise.all(
+                        Array.from(xmlInput.files).map(file => readFileAsText(file, 'iso-8859-1'))
+                    );
+                    
+                    let csvText = null;
+                    if (mode === 'anstalld') {
+                        csvText = await readCsvFile(csvInput.files[0]);
                     }
 
-                    const data = await res.json();
+                    // Save to global variables
+                    window.loadedXmlTexts = xmlTexts;
+                    window.loadedCsvText = csvText;
+                    window.loadedMode = mode;
 
+                    // Analyze data locally
+                    const warnings = BygglosenConverter.analyzeBygglosenData(
+                        xmlTexts,
+                        csvText,
+                        "1293",
+                        mode
+                    );
+
+                    // Render Step 2
                     document.getElementById('step-upload').style.display = 'none';
                     document.getElementById('step-review').style.display = 'block';
 
@@ -535,12 +735,12 @@
 
                     tbody.innerHTML = '';
 
-                    if (data.warnings && data.warnings.length > 0) {
+                    if (warnings && warnings.length > 0) {
                         warningMsg.style.display = 'block';
                         successMsg.style.display = 'none';
                         pdfBtn.style.display = 'inline-flex';
 
-                        data.warnings.forEach(w => {
+                        warnings.forEach(w => {
                             const tr = document.createElement('tr');
 
                             const tdNamn = document.createElement('td');
@@ -578,7 +778,7 @@
                         tbody.appendChild(tr);
                     }
                 } catch (e) {
-                    alert(e.message);
+                    showError(e.message);
                 } finally {
                     btn.disabled = false;
                     btn.textContent = originalText;
@@ -586,7 +786,7 @@
             });
         });
 
-        // Date check logic
+        // Date check logic (local regex scan)
         async function checkXMLDates(input) {
             const section = document.getElementById('date-check-section');
             const msg = document.getElementById('date-info-msg');
@@ -662,14 +862,14 @@
             }
         }
 
-        // PDF download function
+        // PDF download function using jsPDF + AutoTable
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
             doc.setFont("helvetica", "bold");
             doc.setFontSize(16);
-            doc.text("Granskningsrapport - Saknade uppgifter", 14, 20);
+            doc.text("Fellista", 14, 20);
             
             doc.setFont("helvetica", "normal");
             doc.setFontSize(10);
@@ -697,7 +897,7 @@
                 styles: { fontSize: 9 }
             });
             
-            doc.save(`granskningsrapport_${new Date().toISOString().slice(0,10)}.pdf`);
+            doc.save(`Byggnads_fellista_${new Date().toISOString().slice(0,10)}.pdf`);
         }
     </script>
 </body>

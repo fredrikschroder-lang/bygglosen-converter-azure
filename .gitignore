@@ -11,3 +11,4 @@ venv/
 .vscode/
 # Clerk / local dev
 .env.local
+node_modules/
