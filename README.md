@@ -98,6 +98,7 @@ Eftersom appen nu är 100% statisk kan den driftsättas kostnadsfritt på **Azur
      --resource-group HRM_apps \
      --source . \
      --location "swedencentral" \
+     --branch azure-no-auth \
      --sku Free
    ```
 3. Följ instruktionerna i Azure CLI för att länka ditt GitHub-repo för automatisk CI/CD vid push till branchen.
